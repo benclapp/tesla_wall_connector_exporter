@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+tesla_wall_connector_exporter
 
 # Test binary, built with `go test -c`
 *.test
