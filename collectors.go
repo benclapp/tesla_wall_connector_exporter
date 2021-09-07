@@ -2,12 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
+
+const apiLifetime = "/api/1/lifetime"
+const apiVersion = "/api/1/version"
+const apiVitals = "/api/1/vitals"
 
 type Exporter struct{}
 
@@ -16,20 +21,83 @@ func NewExporter() *Exporter {
 }
 
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
+	ch <- up
 	ch <- uptime
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
-	lt := GetLifetime()
+	// Scrape the Wall Connector, unmarshal to structs. Update up metric with status
+	lt, err := scrapeLifetime()
+	if err != nil {
+		log.Error(err)
+		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiLifetime)
+	} else {
+		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiLifetime)
+	}
+
+	version, err := scrapeVersion()
+	if err != nil {
+		log.Error(err)
+		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVersion)
+	} else {
+		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiVersion)
+	}
+	v, err := scrapeVitals()
+	if err != nil {
+		log.Error(err)
+		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVitals)
+	} else {
+		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiVitals)
+	}
+
+	// Update metrics with newly scraped values.
+	// Lifetime
+	ch <- prometheus.MustNewConstMetric(chargeStarts, prometheus.GaugeValue, float64(lt.ChargeStarts))
+	ch <- prometheus.MustNewConstMetric(chargingTime, prometheus.GaugeValue, float64(lt.ChargingTimeS))
+	ch <- prometheus.MustNewConstMetric(energyWh, prometheus.GaugeValue, float64(lt.EnergyWh))
 	ch <- prometheus.MustNewConstMetric(uptime, prometheus.GaugeValue, float64(lt.UptimeS))
+
+	// Version
+	ch <- prometheus.MustNewConstMetric(info, prometheus.GaugeValue, 1,
+		version.FirmwareVersion, version.PartNumber, version.SerialNumber)
+
+	// Vitals
+	var vc float64 = 0
+	if v.VehicleConnected {
+		vc = 1
+	}
+	ch <- prometheus.MustNewConstMetric(vehicleConnected, prometheus.GaugeValue, vc)
 }
 
 // Tesla Wall Connector Structs
 // /api/1/version
-type version struct {
+type Version struct {
 	FirmwareVersion string `json:"firmware_version"`
 	PartNumber      string `json:"part_number"`
 	SerialNumber    string `json:"serial_number"`
+}
+
+func scrapeVersion() (v Version, err error) {
+	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVersion))
+	if err != nil {
+		log.Error(err)
+		return v, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err)
+		return v, err
+	}
+
+	log.Debug(body)
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		log.Error(err)
+		return v, err
+	}
+
+	return v, nil
 }
 
 // /api/1/lifetime
@@ -46,26 +114,27 @@ type Lifetime struct {
 	ChargingTimeS         int     `json:"charging_time_s"`
 }
 
-func GetLifetime() *Lifetime {
-	// Perhaps this should return err too, don't fail the entire scrape
-	resp, err := http.Get("http://192.168.1.131/api/1/lifetime")
+func scrapeLifetime() (lt Lifetime, err error) {
+	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiLifetime))
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return lt, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return lt, err
 	}
 
 	log.Debug(body)
-	var lt Lifetime
 	err = json.Unmarshal(body, &lt)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return lt, err
 	}
 
-	return &lt
+	return lt, nil
 }
 
 // /api/1/vitals
@@ -96,4 +165,27 @@ type vitals struct {
 	ConfigStatus      int           `json:"config_status"`
 	EvseState         int           `json:"evse_state"`
 	CurrentAlerts     []interface{} `json:"current_alerts"`
+}
+
+func scrapeVitals() (v vitals, err error) {
+	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVitals))
+	if err != nil {
+		log.Error(err)
+		return v, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err)
+		return v, err
+	}
+
+	log.Debug(body)
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		log.Error(err)
+		return v, err
+	}
+
+	return v, nil
 }
