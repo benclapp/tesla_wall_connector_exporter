@@ -33,6 +33,11 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiLifetime)
 	} else {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiLifetime)
+
+		ch <- prometheus.MustNewConstMetric(chargeStarts, prometheus.GaugeValue, float64(lt.ChargeStarts))
+		ch <- prometheus.MustNewConstMetric(chargingTime, prometheus.GaugeValue, float64(lt.ChargingTimeS))
+		ch <- prometheus.MustNewConstMetric(energyWh, prometheus.GaugeValue, float64(lt.EnergyWh))
+		ch <- prometheus.MustNewConstMetric(uptime, prometheus.GaugeValue, float64(lt.UptimeS))
 	}
 
 	version, err := scrapeVersion()
@@ -41,6 +46,9 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVersion)
 	} else {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiVersion)
+
+		ch <- prometheus.MustNewConstMetric(info, prometheus.GaugeValue, 1,
+			version.FirmwareVersion, version.PartNumber, version.SerialNumber)
 	}
 	v, err := scrapeVitals()
 	if err != nil {
@@ -48,34 +56,23 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVitals)
 	} else {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiVitals)
+
+		var vc float64 = 0
+		if v.VehicleConnected {
+			vc = 1
+		}
+		ch <- prometheus.MustNewConstMetric(vehicleConnected, prometheus.GaugeValue, vc)
+		ch <- prometheus.MustNewConstMetric(alertsCount, prometheus.GaugeValue, float64(len(v.CurrentAlerts)))
+		ch <- prometheus.MustNewConstMetric(gridHz, prometheus.GaugeValue, v.GridHz)
+		ch <- prometheus.MustNewConstMetric(gridV, prometheus.GaugeValue, v.GridV)
+		ch <- prometheus.MustNewConstMetric(handleTemp, prometheus.GaugeValue, v.HandleTempC)
+		ch <- prometheus.MustNewConstMetric(mcuTemp, prometheus.GaugeValue, v.McuTempC)
+		ch <- prometheus.MustNewConstMetric(pcbaTemp, prometheus.GaugeValue, v.PcbaTempC)
+		ch <- prometheus.MustNewConstMetric(sessionEnergyWh, prometheus.CounterValue, v.SessionEnergyWh)
+		ch <- prometheus.MustNewConstMetric(sessionSeconds, prometheus.CounterValue, float64(v.SessionS))
+		ch <- prometheus.MustNewConstMetric(vehicleCurrentAmps, prometheus.GaugeValue, v.VehicleCurrentA)
 	}
 
-	// Update metrics with newly scraped values.
-	// Lifetime
-	ch <- prometheus.MustNewConstMetric(chargeStarts, prometheus.GaugeValue, float64(lt.ChargeStarts))
-	ch <- prometheus.MustNewConstMetric(chargingTime, prometheus.GaugeValue, float64(lt.ChargingTimeS))
-	ch <- prometheus.MustNewConstMetric(energyWh, prometheus.GaugeValue, float64(lt.EnergyWh))
-	ch <- prometheus.MustNewConstMetric(uptime, prometheus.GaugeValue, float64(lt.UptimeS))
-
-	// Version
-	ch <- prometheus.MustNewConstMetric(info, prometheus.GaugeValue, 1,
-		version.FirmwareVersion, version.PartNumber, version.SerialNumber)
-
-	// Vitals
-	ch <- prometheus.MustNewConstMetric(alertsCount, prometheus.GaugeValue, float64(len(v.CurrentAlerts)))
-	ch <- prometheus.MustNewConstMetric(gridHz, prometheus.GaugeValue, v.GridHz)
-	ch <- prometheus.MustNewConstMetric(gridV, prometheus.GaugeValue, v.GridV)
-	ch <- prometheus.MustNewConstMetric(handleTemp, prometheus.GaugeValue, v.HandleTempC)
-	ch <- prometheus.MustNewConstMetric(mcuTemp, prometheus.GaugeValue, v.McuTempC)
-	ch <- prometheus.MustNewConstMetric(pcbaTemp, prometheus.GaugeValue, v.PcbaTempC)
-	ch <- prometheus.MustNewConstMetric(sessionEnergyWh, prometheus.CounterValue, v.SessionEnergyWh)
-	ch <- prometheus.MustNewConstMetric(sessionSeconds, prometheus.CounterValue, float64(v.SessionS))
-	var vc float64 = 0
-	if v.VehicleConnected {
-		vc = 1
-	}
-	ch <- prometheus.MustNewConstMetric(vehicleConnected, prometheus.GaugeValue, vc)
-	ch <- prometheus.MustNewConstMetric(vehicleCurrentAmps, prometheus.GaugeValue, v.VehicleCurrentA)
 }
 
 // Tesla Wall Connector Structs
@@ -89,20 +86,20 @@ type Version struct {
 func scrapeVersion() (v Version, err error) {
 	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVersion))
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return v, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return v, err
 	}
 
 	log.Debug(body)
 	err = json.Unmarshal(body, &v)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return v, err
 	}
 
@@ -126,20 +123,20 @@ type Lifetime struct {
 func scrapeLifetime() (lt Lifetime, err error) {
 	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiLifetime))
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return lt, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return lt, err
 	}
 
 	log.Debug(body)
 	err = json.Unmarshal(body, &lt)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return lt, err
 	}
 
@@ -179,20 +176,20 @@ type vitals struct {
 func scrapeVitals() (v vitals, err error) {
 	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVitals))
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return v, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return v, err
 	}
 
 	log.Debug(body)
 	err = json.Unmarshal(body, &v)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return v, err
 	}
 
