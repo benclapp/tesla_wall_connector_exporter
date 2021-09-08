@@ -14,3 +14,5 @@ tesla_wall_connector_exporter
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+dist/
