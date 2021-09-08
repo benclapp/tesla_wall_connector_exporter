@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,6 +18,9 @@ var (
 		"Path to expose metrics on.")
 	twcAddress = flag.String("twc.address", "",
 		"[REQUIRED] The address of the Tesla Wall Connector.")
+
+	// Provided at build time
+	builtBy, commit, date, version string
 )
 
 func main() {
@@ -27,12 +31,24 @@ func main() {
 		log.Fatal("Address for the Tesla Wall Connector is required.")
 	}
 
-	log.Info("Tesla Wall Connector Exporter")
+	log.Info(fmt.Sprintf("Tesla Wall Connector Exporter. builtBy=%s commit=%s date=%s version=%s",
+		builtBy, commit, date, version))
 	log.Info("Listening at: " + *listenAddress)
 	log.Info("Metrics path: " + *metricsPath)
 	log.Info("Tesla Wall Connector address: " + *twcAddress)
 
-	prometheus.MustRegister(NewExporter())
+	var build_info = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "teslawallconnector_build_info",
+		Help: "Build info about the tessla_wall_connector_exporter",
+		ConstLabels: prometheus.Labels{
+			"builtBy": builtBy,
+			"commit":  commit,
+			"date":    date,
+			"version": version,
+		}})
+	prometheus.MustRegister(build_info, NewExporter())
+	build_info.Set(1)
+
 	http.Handle(*metricsPath, promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
