@@ -9,3 +9,6 @@ Currently, these metrics are:
 - `teslawallconnector_charge_starts_total`
 - `teslawallconnector_charging_duration_seconds`
 - `teslawallconnector_delivered_energy_watt_hours_total`
+- `teslawallconnector_session_duration_seconds`
+- `teslawallconnector_session_energy_watt_hours_total`
+- `teslawallconnector_vehicle_current_amps`

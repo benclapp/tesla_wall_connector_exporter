@@ -62,11 +62,20 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		version.FirmwareVersion, version.PartNumber, version.SerialNumber)
 
 	// Vitals
+	ch <- prometheus.MustNewConstMetric(alertsCount, prometheus.GaugeValue, float64(len(v.CurrentAlerts)))
+	ch <- prometheus.MustNewConstMetric(gridHz, prometheus.GaugeValue, v.GridHz)
+	ch <- prometheus.MustNewConstMetric(gridV, prometheus.GaugeValue, v.GridV)
+	ch <- prometheus.MustNewConstMetric(handleTemp, prometheus.GaugeValue, v.HandleTempC)
+	ch <- prometheus.MustNewConstMetric(mcuTemp, prometheus.GaugeValue, v.McuTempC)
+	ch <- prometheus.MustNewConstMetric(pcbaTemp, prometheus.GaugeValue, v.PcbaTempC)
+	ch <- prometheus.MustNewConstMetric(sessionEnergyWh, prometheus.CounterValue, v.SessionEnergyWh)
+	ch <- prometheus.MustNewConstMetric(sessionSeconds, prometheus.CounterValue, float64(v.SessionS))
 	var vc float64 = 0
 	if v.VehicleConnected {
 		vc = 1
 	}
 	ch <- prometheus.MustNewConstMetric(vehicleConnected, prometheus.GaugeValue, vc)
+	ch <- prometheus.MustNewConstMetric(vehicleCurrentAmps, prometheus.GaugeValue, v.VehicleCurrentA)
 }
 
 // Tesla Wall Connector Structs

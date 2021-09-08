@@ -15,7 +15,16 @@ var (
 		[]string{"firmware_version", "part_number", "serial_number"})
 
 	// Vitals
-	vehicleConnected = newMetricDesc("vehicle_connected", "Whether or not a vehicle is connected", nil)
+	alertsCount        = newMetricDesc("current_alerts", "How many current alerts are there", nil)
+	gridHz             = newMetricDesc("grid_hertz", "Current Grid Frequency", nil)
+	gridV              = newMetricDesc("grid_voltage", "Current Grid Voltage", nil)
+	handleTemp         = newMetricDesc("handle_temperature_celsius", "Current temperature of the handle", nil)
+	mcuTemp            = newMetricDesc("mcu_temperature_celsius", "Current temperature of the main control unit", nil)
+	pcbaTemp           = newMetricDesc("pcba_temperature_celsius", "Current temperature of PCBA", nil)
+	sessionEnergyWh    = newMetricDesc("session_energy_watt_hours_total", "Energy delivered in the current charge session (TBC)", nil)
+	sessionSeconds     = newMetricDesc("session_duration_seconds", "Charge session duration in seconds (TBC)", nil)
+	vehicleConnected   = newMetricDesc("vehicle_connected", "Whether or not a vehicle is connected", nil)
+	vehicleCurrentAmps = newMetricDesc("vehicle_current_amps", "Amps drawn by the connected vehicle (TBC)", nil)
 )
 
 func newMetricDesc(name string, help string, labels []string) *prometheus.Desc {
