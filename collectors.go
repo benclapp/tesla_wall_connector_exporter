@@ -22,7 +22,24 @@ func NewExporter() *Exporter {
 
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- up
+	// Lifetime
+	ch <- chargeStarts
+	ch <- chargingTime
+	ch <- energyWh
 	ch <- uptime
+	// Version
+	ch <- info
+	// Vitals
+	ch <- alertsCount
+	ch <- gridHz
+	ch <- gridV
+	ch <- handleTemp
+	ch <- mcuTemp
+	ch <- pcbaTemp
+	ch <- sessionEnergyWh
+	ch <- sessionSeconds
+	ch <- vehicleConnected
+	ch <- vehicleCurrentAmps
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
@@ -72,7 +89,6 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(sessionSeconds, prometheus.CounterValue, float64(v.SessionS))
 		ch <- prometheus.MustNewConstMetric(vehicleCurrentAmps, prometheus.GaugeValue, v.VehicleCurrentA)
 	}
-
 }
 
 // Tesla Wall Connector Structs
