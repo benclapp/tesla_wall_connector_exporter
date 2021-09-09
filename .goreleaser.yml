@@ -16,11 +16,6 @@ dockers:
     - ghcr.io/benclapp/tesla_wall_connector_exporter:v{{ .Major }}
     - ghcr.io/benclapp/tesla_wall_connector_exporter:v{{ .Major }}.{{ .Minor }}
     - ghcr.io/benclapp/tesla_wall_connector_exporter:{{ .Tag }}
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
 checksum:
   name_template: 'checksums.txt'
 snapshot:
