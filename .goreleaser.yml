@@ -1,0 +1,35 @@
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+dockers:
+  - dockerfile: goreleaser.Dockerfile
+    image_templates:
+    - ghcr.io/benclapp/tesla_wall_connector_exporter:latest
+    - ghcr.io/benclapp/tesla_wall_connector_exporter:v{{ .Major }}
+    - ghcr.io/benclapp/tesla_wall_connector_exporter:v{{ .Major }}.{{ .Minor }}
+    - ghcr.io/benclapp/tesla_wall_connector_exporter:{{ .Tag }}
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
