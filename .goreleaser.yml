@@ -10,11 +10,12 @@ builds:
       - windows
       - darwin
 dockers:
-  - image_templates:
+  - dockerfile: goreleaser.Dockerfile
+    image_templates:
     - ghcr.io/benclapp/tesla_wall_connector_exporter:latest
-    - ghcr.io/benclapp/tesla_wall_connector_exporter:{{ .Tag }}
     - ghcr.io/benclapp/tesla_wall_connector_exporter:v{{ .Major }}
     - ghcr.io/benclapp/tesla_wall_connector_exporter:v{{ .Major }}.{{ .Minor }}
+    - ghcr.io/benclapp/tesla_wall_connector_exporter:{{ .Tag }}
 archives:
   - replacements:
       darwin: Darwin
