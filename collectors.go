@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -44,7 +45,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	// Scrape the Wall Connector, unmarshal to structs. Update up metric with status
-	lt, err := scrapeLifetime()
+	lt, ltT, err := scrapeLifetime()
 	if err != nil {
 		log.Error(err)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiLifetime)
@@ -56,8 +57,9 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(energyWh, prometheus.GaugeValue, float64(lt.EnergyWh))
 		ch <- prometheus.MustNewConstMetric(uptime, prometheus.GaugeValue, float64(lt.UptimeS))
 	}
+	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, ltT, apiLifetime)
 
-	version, err := scrapeVersion()
+	version, verT, err := scrapeVersion()
 	if err != nil {
 		log.Error(err)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVersion)
@@ -67,7 +69,9 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(info, prometheus.GaugeValue, 1,
 			version.FirmwareVersion, version.PartNumber, version.SerialNumber)
 	}
-	v, err := scrapeVitals()
+	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, verT, apiVersion)
+
+	v, viT, err := scrapeVitals()
 	if err != nil {
 		log.Error(err)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVitals)
@@ -89,6 +93,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(sessionSeconds, prometheus.CounterValue, float64(v.SessionS))
 		ch <- prometheus.MustNewConstMetric(vehicleCurrentAmps, prometheus.GaugeValue, v.VehicleCurrentA)
 	}
+	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, viT, apiVitals)
 }
 
 // Tesla Wall Connector Structs
@@ -99,27 +104,30 @@ type Version struct {
 	SerialNumber    string `json:"serial_number"`
 }
 
-func scrapeVersion() (v Version, err error) {
+func scrapeVersion() (v Version, t float64, err error) {
+	start := time.Now()
 	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVersion))
 	if err != nil {
 		log.Debug(err)
-		return v, err
+		return v, time.Since(start).Seconds(), err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Debug(err)
-		return v, err
+		return v, time.Since(start).Seconds(), err
 	}
+
+	t = time.Since(start).Seconds()
 
 	log.Debug(body)
 	err = json.Unmarshal(body, &v)
 	if err != nil {
 		log.Debug(err)
-		return v, err
+		return v, t, err
 	}
 
-	return v, nil
+	return v, t, nil
 }
 
 // /api/1/lifetime
@@ -136,27 +144,29 @@ type Lifetime struct {
 	ChargingTimeS         int     `json:"charging_time_s"`
 }
 
-func scrapeLifetime() (lt Lifetime, err error) {
+func scrapeLifetime() (lt Lifetime, t float64, err error) {
+	start := time.Now()
 	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiLifetime))
 	if err != nil {
 		log.Debug(err)
-		return lt, err
+		return lt, time.Since(start).Seconds(), err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Debug(err)
-		return lt, err
+		return lt, time.Since(start).Seconds(), err
 	}
+	t = time.Since(start).Seconds()
 
 	log.Debug(body)
 	err = json.Unmarshal(body, &lt)
 	if err != nil {
 		log.Debug(err)
-		return lt, err
+		return lt, t, err
 	}
 
-	return lt, nil
+	return lt, t, nil
 }
 
 // /api/1/vitals
@@ -189,25 +199,26 @@ type vitals struct {
 	CurrentAlerts     []interface{} `json:"current_alerts"`
 }
 
-func scrapeVitals() (v vitals, err error) {
+func scrapeVitals() (v vitals, t float64, err error) {
+	start := time.Now()
 	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVitals))
 	if err != nil {
 		log.Debug(err)
-		return v, err
+		return v, time.Since(start).Seconds(), err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Debug(err)
-		return v, err
+		return v, time.Since(start).Seconds(), err
 	}
-
+	t = time.Since(start).Seconds()
 	log.Debug(body)
 	err = json.Unmarshal(body, &v)
 	if err != nil {
 		log.Debug(err)
-		return v, err
+		return v, t, err
 	}
 
-	return v, nil
+	return v, t, nil
 }
