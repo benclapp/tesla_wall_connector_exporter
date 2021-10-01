@@ -3,7 +3,8 @@ package main
 import "github.com/prometheus/client_golang/prometheus"
 
 var (
-	up = newMetricDesc("up", "Status of Tesla Wall Connector API calls", []string{"collector"})
+	up             = newMetricDesc("up", "Status of Tesla Wall Connector API calls", []string{"collector"})
+	scrapeDuration = newMetricDesc("scrape_duration", "Time of scrapes per collector", []string{"collector"})
 	// Lifetime
 	chargeStarts = newMetricDesc("charge_starts_total", "Number of charges started (TBC)", nil)
 	chargingTime = newMetricDesc("charging_duration_seconds", "Total time spent charging (TBC)", nil)
