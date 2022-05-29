@@ -44,8 +44,12 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
+	client := http.Client{
+		Timeout: *twcScrapeTimeout,
+	}
+
 	// Scrape the Wall Connector, unmarshal to structs. Update up metric with status
-	lt, ltT, err := scrapeLifetime()
+	lt, ltT, err := scrapeLifetime(client)
 	if err != nil {
 		log.Error(err)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiLifetime)
@@ -59,7 +63,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, ltT, apiLifetime)
 
-	version, verT, err := scrapeVersion()
+	version, verT, err := scrapeVersion(client)
 	if err != nil {
 		log.Error(err)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVersion)
@@ -71,7 +75,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, verT, apiVersion)
 
-	v, viT, err := scrapeVitals()
+	v, viT, err := scrapeVitals(client)
 	if err != nil {
 		log.Error(err)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVitals)
@@ -111,9 +115,9 @@ type Version struct {
 	SerialNumber    string `json:"serial_number"`
 }
 
-func scrapeVersion() (v Version, t float64, err error) {
+func scrapeVersion(client http.Client) (v Version, t float64, err error) {
 	start := time.Now()
-	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVersion))
+	resp, err := client.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVersion))
 	if err != nil {
 		log.Debug(err)
 		return v, time.Since(start).Seconds(), err
@@ -151,9 +155,9 @@ type Lifetime struct {
 	ChargingTimeS         int     `json:"charging_time_s"`
 }
 
-func scrapeLifetime() (lt Lifetime, t float64, err error) {
+func scrapeLifetime(client http.Client) (lt Lifetime, t float64, err error) {
 	start := time.Now()
-	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiLifetime))
+	resp, err := client.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiLifetime))
 	if err != nil {
 		log.Debug(err)
 		return lt, time.Since(start).Seconds(), err
@@ -206,9 +210,9 @@ type vitals struct {
 	CurrentAlerts     []interface{} `json:"current_alerts"`
 }
 
-func scrapeVitals() (v vitals, t float64, err error) {
+func scrapeVitals(client http.Client) (v vitals, t float64, err error) {
 	start := time.Now()
-	resp, err := http.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVitals))
+	resp, err := client.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVitals))
 	if err != nil {
 		log.Debug(err)
 		return v, time.Since(start).Seconds(), err

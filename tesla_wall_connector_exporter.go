@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -17,6 +18,8 @@ var (
 		"Path to expose metrics on.")
 	twcAddress = flag.String("twc.address", "",
 		"[REQUIRED] The address of the Tesla Wall Connector.")
+	twcScrapeTimeout = flag.Duration("twc.scrape-timeout", time.Second,
+		"The timeout for the scrape request.")
 
 	// Provided at build time
 	builtBy, commit, date, version string
@@ -35,6 +38,7 @@ func main() {
 	log.Info("Listening at: " + *listenAddress)
 	log.Info("Metrics path: " + *metricsPath)
 	log.Info("Tesla Wall Connector address: " + *twcAddress)
+	log.Info("Scrape timeout: " + (*twcScrapeTimeout).String())
 
 	var build_info = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "teslawallconnector_build_info",
