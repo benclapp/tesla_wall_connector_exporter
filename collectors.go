@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -122,7 +122,7 @@ func scrapeVersion(client http.Client) (v Version, t float64, err error) {
 		return v, time.Since(start).Seconds(), err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return v, time.Since(start).Seconds(), err
 	}
@@ -158,7 +158,7 @@ func scrapeLifetime(client http.Client) (lt Lifetime, t float64, err error) {
 		return lt, time.Since(start).Seconds(), err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return lt, time.Since(start).Seconds(), err
 	}
@@ -209,7 +209,7 @@ func scrapeVitals(client http.Client) (v vitals, t float64, err error) {
 		return v, time.Since(start).Seconds(), err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return v, time.Since(start).Seconds(), err
 	}
