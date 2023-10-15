@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 )
 
 const apiLifetime = "/api/1/lifetime"
@@ -51,7 +51,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	// Scrape the Wall Connector, unmarshal to structs. Update up metric with status
 	lt, ltT, err := scrapeLifetime(client)
 	if err != nil {
-		log.Error(err)
+		slog.Error("Failed collection", "err", err, "path", apiLifetime)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiLifetime)
 	} else {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiLifetime)
@@ -65,7 +65,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 	version, verT, err := scrapeVersion(client)
 	if err != nil {
-		log.Error(err)
+		slog.Error("Failed collection", "err", err, "path", apiVersion)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVersion)
 	} else {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiVersion)
@@ -77,7 +77,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 	v, viT, err := scrapeVitals(client)
 	if err != nil {
-		log.Error(err)
+		slog.Error("Failed collection", "err", err, "path", apiVitals)
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 0, apiVitals)
 	} else {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiVitals)
@@ -119,22 +119,18 @@ func scrapeVersion(client http.Client) (v Version, t float64, err error) {
 	start := time.Now()
 	resp, err := client.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVersion))
 	if err != nil {
-		log.Debug(err)
 		return v, time.Since(start).Seconds(), err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Debug(err)
 		return v, time.Since(start).Seconds(), err
 	}
 
 	t = time.Since(start).Seconds()
 
-	log.Debug(body)
 	err = json.Unmarshal(body, &v)
 	if err != nil {
-		log.Debug(err)
 		return v, t, err
 	}
 
@@ -159,21 +155,17 @@ func scrapeLifetime(client http.Client) (lt Lifetime, t float64, err error) {
 	start := time.Now()
 	resp, err := client.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiLifetime))
 	if err != nil {
-		log.Debug(err)
 		return lt, time.Since(start).Seconds(), err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Debug(err)
 		return lt, time.Since(start).Seconds(), err
 	}
 	t = time.Since(start).Seconds()
 
-	log.Debug(body)
 	err = json.Unmarshal(body, &lt)
 	if err != nil {
-		log.Debug(err)
 		return lt, t, err
 	}
 
@@ -214,20 +206,16 @@ func scrapeVitals(client http.Client) (v vitals, t float64, err error) {
 	start := time.Now()
 	resp, err := client.Get(fmt.Sprintf("http://%s%s", *twcAddress, apiVitals))
 	if err != nil {
-		log.Debug(err)
 		return v, time.Since(start).Seconds(), err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Debug(err)
 		return v, time.Since(start).Seconds(), err
 	}
 	t = time.Since(start).Seconds()
-	log.Debug(body)
 	err = json.Unmarshal(body, &v)
 	if err != nil {
-		log.Debug(err)
 		return v, t, err
 	}
 

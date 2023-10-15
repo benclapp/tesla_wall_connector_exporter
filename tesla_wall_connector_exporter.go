@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -26,19 +26,18 @@ var (
 )
 
 func main() {
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-
 	flag.Parse()
 	if len(*twcAddress) == 0 {
 		log.Fatal("Address for the Tesla Wall Connector is required.")
 	}
 
-	log.Info(fmt.Sprintf("Tesla Wall Connector Exporter. builtBy=%s commit=%s date=%s version=%s",
-		builtBy, commit, date, version))
-	log.Info("Listening at: " + *listenAddress)
-	log.Info("Metrics path: " + *metricsPath)
-	log.Info("Tesla Wall Connector address: " + *twcAddress)
-	log.Info("Scrape timeout: " + (*twcScrapeTimeout).String())
+	slog.Info("Tesla Wall Connector Exporter", "builtBy", builtBy, "commit", commit, "date", date, "version", version)
+	slog.Info("Configuration: ",
+		"web.listen-address", *listenAddress,
+		"web.metrics-path", *metricsPath,
+		"twc.address", *twcAddress,
+		"twc.scrape-timeout", *twcScrapeTimeout,
+	)
 
 	var build_info = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "teslawallconnector_build_info",
