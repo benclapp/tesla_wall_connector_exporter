@@ -6,10 +6,14 @@ var (
 	up             = newMetricDesc("up", "Status of Tesla Wall Connector API calls", []string{"collector"})
 	scrapeDuration = newMetricDesc("scrape_duration_seconds", "Duration of scrapes per collector", []string{"collector"})
 	// Lifetime
-	chargeStarts = newMetricDesc("charge_starts_total", "Number of charges started (TBC)", nil)
-	chargingTime = newMetricDesc("charging_duration_seconds", "Total time spent charging (TBC)", nil)
-	energyWh     = newMetricDesc("delivered_energy_watt_hours_total", "Total energy delivered via Wall connector (TBC)", nil)
-	uptime       = newMetricDesc("uptime_seconds", "Uptime of wallconnector", nil)
+	chargeStarts          = newMetricDesc("lifetime_charge_starts_total", "Number of charges started (TBC)", nil)
+	chargingTime          = newMetricDesc("lifetime_charging_duration_seconds", "Total time spent charging (TBC)", nil)
+	energyWh              = newMetricDesc("lifetime_energy_watt_hours_total", "Total energy delivered via Wall connector (TBC)", nil)
+	uptime                = newMetricDesc("uptime_seconds", "Uptime of wallconnector", nil)
+	contactorCycles       = newMetricDesc("lifetime_contactor_cycles_total", "Number of contactor cycles", nil)
+	contactorCyclesLoaded = newMetricDesc("lifetime_contactor_cycles_loaded_total", "Number of contactor cycles while loaded", nil)
+	lifetimeAlerts        = newMetricDesc("lifetime_alerts_total", "Number of lifetime alerts", nil)
+	thermalFoldbacks      = newMetricDesc("lifetime_thermal_foldbacks_total", "Number of thermal foldbacks", nil)
 
 	// Version
 	info = newMetricDesc("info", "Version and general info about the Tesla Wall Connector",

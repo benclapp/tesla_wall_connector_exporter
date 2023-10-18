@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,6 +29,11 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- chargingTime
 	ch <- energyWh
 	ch <- uptime
+	ch <- contactorCycles
+	ch <- contactorCyclesLoaded
+	ch <- lifetimeAlerts
+	ch <- thermalFoldbacks
+
 	// Version
 	ch <- info
 	// Vitals
@@ -60,6 +66,10 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(chargingTime, prometheus.GaugeValue, float64(lt.ChargingTimeS))
 		ch <- prometheus.MustNewConstMetric(energyWh, prometheus.GaugeValue, float64(lt.EnergyWh))
 		ch <- prometheus.MustNewConstMetric(uptime, prometheus.GaugeValue, float64(lt.UptimeS))
+		ch <- prometheus.MustNewConstMetric(contactorCycles, prometheus.GaugeValue, float64(lt.ContactorCycles))
+		ch <- prometheus.MustNewConstMetric(contactorCyclesLoaded, prometheus.GaugeValue, float64(lt.ContactorCyclesLoaded))
+		ch <- prometheus.MustNewConstMetric(lifetimeAlerts, prometheus.GaugeValue, float64(lt.AlertCount))
+		ch <- prometheus.MustNewConstMetric(thermalFoldbacks, prometheus.GaugeValue, float64(lt.ThermalFoldbacks))
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, ltT, apiLifetime)
 
@@ -163,6 +173,10 @@ func scrapeLifetime(client http.Client) (lt Lifetime, t float64, err error) {
 		return lt, time.Since(start).Seconds(), err
 	}
 	t = time.Since(start).Seconds()
+
+	// Fix for invalid json being returned
+	// Replace the "nan" substring with a null
+	body = bytes.Replace(body, []byte(":nan"), []byte(":null"), 1)
 
 	err = json.Unmarshal(body, &lt)
 	if err != nil {
