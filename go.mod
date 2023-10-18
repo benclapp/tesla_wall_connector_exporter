@@ -1,6 +1,6 @@
 module github.com/benclapp/tesla_wall_connector_exporter
 
-go 1.18
+go 1.21
 
 require (
 	github.com/prometheus/client_golang v1.17.0
