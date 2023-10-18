@@ -2,13 +2,11 @@
 
 Prometheus exporter for Tesla Wall Connector (Gen3) metrics.
 
-Unfortunately the `/api/1/lifetime` endpoint on the Wall Connector is returning invalid JSON, so metrics sourced from this endpoint are unavailable at the moment.
-
 ## Running
 
-This exporter needs to be able to reach the wall connector on the same network. All that's requried by the exporter is to point the exporter at a Wall Connector's address. For example, by passing the flag `-twc.address=192.168.1.123`.
+This exporter needs to be able to reach the wall connector on the same network. All that's required by the exporter is to point the exporter at a Wall Connector's address. For example, by passing the flag `-twc.address=192.168.1.123`. Using a domain name is recommended, in case the Wall Connector's IP changes.
 
-The exporter is intented to map 1:1 to a Wall Connector. If you have multiple Wall Connectors, you'll need to run an exporter for each.
+The exporter is intended to map 1:1 to a Wall Connector. If you have multiple Wall Connectors, you'll need to run an exporter for each.
 
 ### Example docker-compose snippet
 
@@ -18,7 +16,7 @@ tesla_wall_connector_exporter:
   container_name: tesla_wall_connector_exporter
   restart: always
   command:
-  - -twc.address=192.168.1.123
+  - -twc.address=teslawallconnector_abc123.home.local
   ports:
   - 9859:9859
 ```
