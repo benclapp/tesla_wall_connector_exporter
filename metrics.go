@@ -9,7 +9,7 @@ var (
 	chargeStarts          = newMetricDesc("lifetime_charge_starts_total", "Number of charges started (TBC)", nil)
 	chargingTime          = newMetricDesc("lifetime_charging_duration_seconds", "Total time spent charging (TBC)", nil)
 	energyWh              = newMetricDesc("lifetime_energy_watt_hours_total", "Total energy delivered via Wall connector (TBC)", nil)
-	uptime                = newMetricDesc("uptime_seconds", "Uptime of wallconnector", nil)
+	uptime                = newMetricDesc("lifetime_uptime_seconds_total", "Lifetime uptime of wallconnector", nil)
 	contactorCycles       = newMetricDesc("lifetime_contactor_cycles_total", "Number of contactor cycles", nil)
 	contactorCyclesLoaded = newMetricDesc("lifetime_contactor_cycles_loaded_total", "Number of contactor cycles while loaded", nil)
 	lifetimeAlerts        = newMetricDesc("lifetime_alerts_total", "Number of lifetime alerts", nil)
@@ -37,6 +37,11 @@ var (
 	sessionSeconds     = newMetricDesc("session_duration_seconds", "Charge session duration in seconds (TBC)", nil)
 	vehicleConnected   = newMetricDesc("vehicle_connected", "Whether or not a vehicle is connected", nil)
 	vehicleCurrentAmps = newMetricDesc("vehicle_current_amps", "Amps drawn by the connected vehicle (TBC)", nil)
+	sessionUptime      = newMetricDesc("uptime_seconds_total", "Time since the last restart in seconds", nil)
+	contactorClosed    = newMetricDesc("contactor_closed", "Whether or not the contactor is closed", nil)
+	relayCoildV        = newMetricDesc("relay_coil_voltage", "Voltage of the relay coil", nil)
+	configStatus       = newMetricDesc("config_status", "Config status", nil)
+	evseState          = newMetricDesc("evse_state", "EVSE state", nil)
 )
 
 func newMetricDesc(name string, help string, labels []string) *prometheus.Desc {

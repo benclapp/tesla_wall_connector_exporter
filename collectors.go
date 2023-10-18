@@ -47,6 +47,11 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- sessionSeconds
 	ch <- vehicleConnected
 	ch <- vehicleCurrentAmps
+	ch <- sessionUptime
+	ch <- contactorClosed
+	ch <- relayCoildV
+	ch <- configStatus
+	ch <- evseState
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
@@ -93,9 +98,14 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiVitals)
 
 		var vc float64 = 0
+		var cc float64 = 0
 		if v.VehicleConnected {
 			vc = 1
 		}
+		if v.ContactorClosed {
+			cc = 1
+		}
+
 		ch <- prometheus.MustNewConstMetric(vehicleConnected, prometheus.GaugeValue, vc)
 		ch <- prometheus.MustNewConstMetric(alertsCount, prometheus.GaugeValue, float64(len(v.CurrentAlerts)))
 		ch <- prometheus.MustNewConstMetric(gridHz, prometheus.GaugeValue, v.GridHz)
@@ -113,6 +123,11 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(sessionEnergyWh, prometheus.CounterValue, v.SessionEnergyWh)
 		ch <- prometheus.MustNewConstMetric(sessionSeconds, prometheus.CounterValue, float64(v.SessionS))
 		ch <- prometheus.MustNewConstMetric(vehicleCurrentAmps, prometheus.GaugeValue, v.VehicleCurrentA)
+		ch <- prometheus.MustNewConstMetric(sessionUptime, prometheus.GaugeValue, float64(v.UptimeS))
+		ch <- prometheus.MustNewConstMetric(contactorClosed, prometheus.GaugeValue, cc)
+		ch <- prometheus.MustNewConstMetric(relayCoildV, prometheus.GaugeValue, v.RelayCoilV)
+		ch <- prometheus.MustNewConstMetric(configStatus, prometheus.GaugeValue, float64(v.ConfigStatus))
+		ch <- prometheus.MustNewConstMetric(evseState, prometheus.GaugeValue, float64(v.EvseState))
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, viT, apiVitals)
 }
