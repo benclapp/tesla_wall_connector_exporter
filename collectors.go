@@ -67,14 +67,14 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	} else {
 		ch <- prometheus.MustNewConstMetric(up, prometheus.GaugeValue, 1, apiLifetime)
 
-		ch <- prometheus.MustNewConstMetric(chargeStarts, prometheus.GaugeValue, float64(lt.ChargeStarts))
-		ch <- prometheus.MustNewConstMetric(chargingTime, prometheus.GaugeValue, float64(lt.ChargingTimeS))
-		ch <- prometheus.MustNewConstMetric(energyWh, prometheus.GaugeValue, float64(lt.EnergyWh))
-		ch <- prometheus.MustNewConstMetric(uptime, prometheus.GaugeValue, float64(lt.UptimeS))
-		ch <- prometheus.MustNewConstMetric(contactorCycles, prometheus.GaugeValue, float64(lt.ContactorCycles))
-		ch <- prometheus.MustNewConstMetric(contactorCyclesLoaded, prometheus.GaugeValue, float64(lt.ContactorCyclesLoaded))
-		ch <- prometheus.MustNewConstMetric(lifetimeAlerts, prometheus.GaugeValue, float64(lt.AlertCount))
-		ch <- prometheus.MustNewConstMetric(thermalFoldbacks, prometheus.GaugeValue, float64(lt.ThermalFoldbacks))
+		ch <- prometheus.MustNewConstMetric(chargeStarts, prometheus.CounterValue, float64(lt.ChargeStarts))
+		ch <- prometheus.MustNewConstMetric(chargingTime, prometheus.CounterValue, float64(lt.ChargingTimeS))
+		ch <- prometheus.MustNewConstMetric(energyWh, prometheus.CounterValue, float64(lt.EnergyWh))
+		ch <- prometheus.MustNewConstMetric(uptime, prometheus.CounterValue, float64(lt.UptimeS))
+		ch <- prometheus.MustNewConstMetric(contactorCycles, prometheus.CounterValue, float64(lt.ContactorCycles))
+		ch <- prometheus.MustNewConstMetric(contactorCyclesLoaded, prometheus.CounterValue, float64(lt.ContactorCyclesLoaded))
+		ch <- prometheus.MustNewConstMetric(lifetimeAlerts, prometheus.CounterValue, float64(lt.AlertCount))
+		ch <- prometheus.MustNewConstMetric(thermalFoldbacks, prometheus.CounterValue, float64(lt.ThermalFoldbacks))
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDuration, prometheus.GaugeValue, ltT, apiLifetime)
 
@@ -123,7 +123,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(sessionEnergyWh, prometheus.CounterValue, v.SessionEnergyWh)
 		ch <- prometheus.MustNewConstMetric(sessionSeconds, prometheus.CounterValue, float64(v.SessionS))
 		ch <- prometheus.MustNewConstMetric(vehicleCurrentAmps, prometheus.GaugeValue, v.VehicleCurrentA)
-		ch <- prometheus.MustNewConstMetric(sessionUptime, prometheus.GaugeValue, float64(v.UptimeS))
+		ch <- prometheus.MustNewConstMetric(sessionUptime, prometheus.CounterValue, float64(v.UptimeS))
 		ch <- prometheus.MustNewConstMetric(contactorClosed, prometheus.GaugeValue, cc)
 		ch <- prometheus.MustNewConstMetric(relayCoildV, prometheus.GaugeValue, v.RelayCoilV)
 		ch <- prometheus.MustNewConstMetric(configStatus, prometheus.GaugeValue, float64(v.ConfigStatus))
